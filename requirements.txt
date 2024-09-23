@@ -1,0 +1,17 @@
+certifi==2024.8.30
+charset-normalizer==3.3.2
+dateparser==1.2.0
+google-api-core==2.20.0
+google-api-python-client==2.146.0
+google-auth==2.35.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.1
+google-cloud-pubsub==2.23.1
+googleapis-common-protos==1.65.0
+grpcio==1.66.1
+httplib2==0.22.0
+requests==2.32.3
+requests-oauthlib==2.0.0
+protobuf==5.28.2
+pytz==2024.2
+tzlocal==5.2

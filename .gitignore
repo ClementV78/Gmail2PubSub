@@ -1,0 +1,12 @@
+# Ignorer les fichiers JSON contenant des informations sensibles
+credentials.json
+token.json
+service-account.json
+
+# Ignorer les fichiers de cache Python
+__pycache__/
+*.py[cod]
+
+# Ignorer les fichiers spécifiques aux environnements de développement
+.vscode/
+*.env
