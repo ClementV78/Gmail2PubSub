@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gmail2pubsub
+  labels:
+    app: gmail2pubsub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gmail2pubsub
+  template:
+    metadata:
+      labels:
+        app: gmail2pubsub
+    spec:
+      containers:
+      - name: gmail2pubsub
+        image: <ton_image_docker>
+        env:
+          - name: PROJECT_ID
+            value: "smshttp-436212"
+          - name: SUBSCRIPTION_ID
+            value: "gmail-getmessages"
+          - name: LABEL_NAME
+            value: "RESALIB"
+          - name: GMAIL_TOPIC
+            value: "GmailTopic"
+          - name: NEW_RDV_TOPIC
+            value: "NewRdvTopic"
+        volumeMounts:
+        - name: gmail-service-account-volume
+          mountPath: "/run/secrets/service-account.json"
+          subPath: service-account.json
+        - name: gmail-token-volume
+          mountPath: "/run/secrets/token.json"
+          subPath: token.json
+        - name: gmail-credentials-volume
+          mountPath: "/run/secrets/credentials.json"
+          subPath: credentials.json
+      volumes:
+      - name: gmail-service-account-volume
+        secret:
+          secretName: gmail-service-account
+      - name: gmail-token-volume
+        secret:
+          secretName: gmail-token
+      - name: gmail-credentials-volume
+        secret:
+          secretName: gmail-credentials

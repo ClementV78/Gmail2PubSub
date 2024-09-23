@@ -3,7 +3,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 import os
-from config.settings import SCOPES, TOKEN_PATH
+from config.settings import SCOPES, TOKEN_PATH, OAUTHCRED_PATH
 
 def authenticate_gmail_api():
     creds = None
@@ -17,7 +17,7 @@ def authenticate_gmail_api():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)  # Utilisez un fichier OAuth si nécessaire
+                OAUTHCRED_PATH, SCOPES)  # Utilisez un fichier OAuth si nécessaire
             creds = flow.run_local_server(port=0)
 
         # Sauvegarder les credentials pour un usage futur

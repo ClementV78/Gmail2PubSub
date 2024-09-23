@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gmail2pubsub-config
+data:
+  PROJECT_ID: "smshttp-436212"
+  SUBSCRIPTION_ID: "gmail-getmessages"
+  LABEL_NAME: "RESALIB"
+  GMAIL_TOPIC: "GmailTopic"
+  NEW_RDV_TOPIC: "NewRdvTopic"

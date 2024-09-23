@@ -2,6 +2,8 @@
 credentials.json
 token.json
 service-account.json
+secrets/
+
 
 # Ignorer les fichiers de cache Python
 __pycache__/

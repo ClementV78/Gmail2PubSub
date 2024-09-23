@@ -98,5 +98,59 @@ Les tests unitaires peuvent être lancés avec `pytest` :
 ```bash
 pytest tests/
 
+
+Secrets Kubernetes
+ kubectl create namespace dev
+
+ kubectl create secret generic gmail-service-account \
+  --from-file=service-account.json=service-account.json \
+  --namespace=dev
+secret/gmail-service-account created
+
+kubectl create secret generic gmail-token \
+  --from-file=token.json=token.json \
+  --namespace=dev
+secret/gmail-token created
+
+kubectl create secret generic gmail-credentials \
+  --from-file=credentials.json=credentials.json \
+  --namespace=dev
+secret/gmail-credentials created
+
+venv :
+source ~/projetsperso/smsgwy/venv/bin/activate
+
+python -m gmail2pubsub.main --listen
+
+
+docker build -t gmail2pubsub-app .\n
+
+Lancer le conteneur Docker en arrière-plan :
+docker run -d \
+  -e PROJECT_ID="smshttp-436212" \
+  -e SUBSCRIPTION_ID="gmail-getmessages" \
+  -e GMAIL_TOPIC="GmailTopic" \
+  -e NEW_RDV_TOPIC="NewRdvTopic" \
+  -e LABEL_NAME="RESALIB" \
+  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/service-account.json:/run/secrets/service-account.json \
+  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/token.json:/run/secrets/token.json \
+  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/credentials.json:/run/secrets/credentials.json \
+  --name gmail2pubsub-container gmail2pubsub-app python -m gmail2pubsub.main --listen
+
+Lancer le conteneur Docker en mode interactif :
+  docker run -it \
+  -e PROJECT_ID="smshttp-436212" \
+  -e SUBSCRIPTION_ID="gmail-getmessages" \
+  -e GMAIL_TOPIC="GmailTopic" \
+  -e NEW_RDV_TOPIC="NewRdvTopic" \
+  -e LABEL_NAME="RESALIB" \
+  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/service-account.json:/run/secrets/service-account.json \
+  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/token.json:/run/secrets/token.json \
+  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/credentials.json:/run/secrets/credentials.json \
+  --name gmail2pubsub-container gmail2pubsub-app python -m gmail2pubsub.main --listen
+
+#Pour supprimer
+docker rm -f gmail2pubsub-container
+
 ## License
 Ce projet est sous licence MIT.
