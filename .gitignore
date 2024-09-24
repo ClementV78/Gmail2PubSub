@@ -6,6 +6,9 @@ secrets/
 
 history_cache.db
 
+# Temporaire
+update-secret-job.yaml
+
 # Ignorer les fichiers de cache Python
 __pycache__/
 *.py[cod]

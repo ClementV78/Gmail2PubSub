@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: gmail2pubsub
-        image: <ton_image_docker>
+        image: clementv78/gmail2pubsub-app:latest
         env:
           - name: PROJECT_ID
             value: "smshttp-436212"
@@ -28,23 +28,24 @@ spec:
             value: "GmailTopic"
           - name: NEW_RDV_TOPIC
             value: "NewRdvTopic"
+        args: ["python", "-m", "gmail2pubsub.main", "--listen"]
         volumeMounts:
-        - name: gmail-service-account-volume
-          mountPath: "/run/secrets/service-account.json"
-          subPath: service-account.json
-        - name: gmail-token-volume
-          mountPath: "/run/secrets/token.json"
-          subPath: token.json
-        - name: gmail-credentials-volume
-          mountPath: "/run/secrets/credentials.json"
-          subPath: credentials.json
+          - name: gmail-service-account-volume
+            mountPath: /run/secrets/service-account.json
+            subPath: service-account.json
+          - name: gmail-token-volume
+            mountPath: /run/secrets/token.json
+            subPath: token.json
+          - name: gmail-credentials-volume
+            mountPath: /run/secrets/credentials.json
+            subPath: credentials.json
       volumes:
-      - name: gmail-service-account-volume
-        secret:
-          secretName: gmail-service-account
-      - name: gmail-token-volume
-        secret:
-          secretName: gmail-token
-      - name: gmail-credentials-volume
-        secret:
-          secretName: gmail-credentials
+        - name: gmail-service-account-volume
+          secret:
+            secretName: gmail-service-account
+        - name: gmail-token-volume
+          secret:
+            secretName: gmail-token
+        - name: gmail-credentials-volume
+          secret:
+            secretName: gmail-credentials

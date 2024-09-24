@@ -133,6 +133,11 @@ python -m gmail2pubsub.main --reset-cache
     ```sh
     docker build -t gmail2pubsub-app .
     ```
+1. Push the Docker Image to a Registry:
+    ```sh
+    docker tag gmail2pubsub-app your-dockerhub-username/gmail2pubsub-app
+    docker push your-dockerhub-username/gmail2pubsub-app
+    ```  
 
 2. Run the Docker container in the background:
     ```sh
@@ -171,8 +176,9 @@ python -m gmail2pubsub.main --reset-cache
 
 1. Apply the ConfigMap and Deployment:
     ```sh
-    kubectl apply -f configmap.yaml
-    kubectl apply -f deployment.yaml
+    kubectl apply -f configmap.yaml -n dev
+    kubectl apply -f deployment.yaml -n dev
+    kubectl get deployments -n dev
     ```
 
 ## Development

@@ -22,6 +22,8 @@ ENV OAUTHCRED_PATH="/run/secrets/credentials.json"
 ENV LABEL_NAME="RESALIB"
 ENV GMAIL_TOPIC="GmailTopic"
 ENV NEW_RDV_TOPIC="NewRdvTopic"
+# Désactiver le buffering pour s'assurer que les logs s'affichent immédiatement
+ENV PYTHONUNBUFFERED=1
 
 # Exécuter l'application (remplacer par la commande principale de votre script)
 CMD ["python", "-m", "gmail2pubsub.main"]
