@@ -1,3 +1,4 @@
+from gmail2pubsub.db_init import initialize_db, load_history_id, save_history_id
 from googleapiclient.errors import HttpError
 from .pubsub_manager import publish_message_to_topic
 from .email_parser import extract_info_from_email, extract_email_content, get_mail_sent_datetime
@@ -14,6 +15,21 @@ def get_label_id(service, label_name):
         if label['name'] == label_name:
             return label['id']
     raise ValueError(f"Label '{label_name}' non trouvé.")
+
+def initialize_history_id(service):
+    """
+    Initialise le history_id au démarrage de l'application.
+    Si aucun history_id n'est trouvé dans la base de données, il est récupéré depuis Gmail.
+    """
+    initialize_db()  # Créer la base de données si elle n'existe pas déjà
+    history_id = load_history_id()  # Charger le dernier history_id
+    print(f"Loaded history_id: {history_id}")   # Debug
+    if history_id is None:
+        # Si aucun history_id n'est trouvé, récupère le dernier depuis Gmail
+        history_id = get_last_history_id(service)
+        save_history_id(history_id)  # Sauvegarde le history_id initial dans la base de données
+
+    return history_id
 
 def get_last_history_id(service):
     """
@@ -41,6 +57,9 @@ def get_new_messages(service, history_id, label_id, publisher, topic_path):
     ).execute()
 
     history_records = response.get('history', [])
+    if history_records:
+        latest_history_id = history_records[-1]['id']  # Obtenir le dernier history_id
+
     for history_record in history_records:
         if 'messagesAdded' in history_record:
             for message in history_record['messagesAdded']:
@@ -49,6 +68,9 @@ def get_new_messages(service, history_id, label_id, publisher, topic_path):
                 if extracted_info:
                     publish_message_to_topic(publisher, topic_path, extracted_info)
 
+    # Sauvegarde du dernier history_id dans la base de données
+    if history_records:
+        save_history_id(latest_history_id)
 
 def process_message_details(service, message_id, publisher, topic_path):
     """

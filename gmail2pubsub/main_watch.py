@@ -1,6 +1,6 @@
 from google.cloud import pubsub_v1
 from google.oauth2 import service_account
-from .gmail_manager import get_new_messages, get_last_history_id, get_label_id
+from .gmail_manager import get_new_messages, get_last_history_id, get_label_id, initialize_history_id
 from .auth import authenticate_gmail_api
 from googleapiclient.discovery import build
 from config.settings import PROJECT_ID, SUBSCRIPTION_ID, NEW_RDV_TOPIC, CREDENTIALS_PATH, LABEL_NAME
@@ -18,7 +18,12 @@ def start_pubsub_listener():
     # Initialisation du last_history_id et label_id
     creds = authenticate_gmail_api()
     service = build('gmail', 'v1', credentials=creds)
-    last_history_id = get_last_history_id(service)
+
+    # Récupérer l'ID de l'historique ou initialiser à partir de Gmail
+    last_history_id = initialize_history_id(service)
+    print(f"start_pubsub_listener last_history_id: {last_history_id}") # Debug
+    
+    #last_history_id = get_last_history_id(service)
     label_id = get_label_id(service, LABEL_NAME)
 
     # Fonction callback pour traiter les messages

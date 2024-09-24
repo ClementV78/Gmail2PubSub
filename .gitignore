@@ -4,6 +4,7 @@ token.json
 service-account.json
 secrets/
 
+history_cache.db
 
 # Ignorer les fichiers de cache Python
 __pycache__/

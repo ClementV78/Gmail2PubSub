@@ -1,156 +1,194 @@
 # Gmail2PubSub
 
-Gmail2PubSub est une application qui permet de surveiller les emails d'un utilisateur via l'API Gmail et de publier les informations extraites (par exemple, les rendez-vous clients) sur Google Cloud Pub/Sub. Ce projet supporte deux types d'authentification : l'authentification OAuth2 pour l'accès aux emails d'un utilisateur, et l'authentification via un compte de service pour les interactions serveur à serveur (Pub/Sub).
+Gmail2PubSub is an application that allows monitoring a user's emails via the Gmail API and publishing extracted information (e.g., client appointments) to Google Cloud Pub/Sub. This project supports two types of authentication: OAuth2 authentication for accessing a user's emails, and service account authentication for server-to-server interactions (Pub/Sub). The application is designed to be deployed on Kubernetes, making it easy to manage and scale.
 
-## Structure du projet
+## Project Structure
 
-Voici un aperçu des fichiers et dossiers importants du projet :
+Here is an overview of the important files and folders in the project:
 
 ```bash
 .
 ├── gmail2pubsub/
-│   ├── __init__.py             # Fichier d'initialisation du package
-│   ├── auth.py                 # Authentification OAuth2 pour l'API Gmail
-│   ├── email_parser.py         # Extraction des informations des emails
-│   ├── gmail_manager.py        # Gestion de l'API Gmail (labels, messages, etc.)
-│   ├── main.py                 # Script principal pour orchestrer les actions (configurer le watch, écouter les notifications Pub/Sub et publier les informations)
-│   ├── main_watch.py           # Gestion des messages Pub/Sub reçus et traitement des emails liés (callback pour les événements Pub/Sub)
-│   ├── pubsub_manager.py       # Gestion de la publication des informations sur Pub/Sub
-│   ├── utils.py                # Fonctions utilitaires
-│   ├── watch.py                # Configuration des notifications push sur l'API Gmail
+│   ├── __init__.py             # Package initialization file
+│   ├── auth.py                 # OAuth2 authentication for the Gmail API
+│   ├── email_parser.py         # Extracts information from emails
+│   ├── gmail_manager.py        # Manages interactions with the Gmail API (labels, messages, etc.)
+│   ├── main.py                 # Main script to orchestrate actions (configure watch, listen to Pub/Sub notifications, and publish information)
+│   ├── main_watch.py           # Handles received Pub/Sub messages and processes related emails (callback for Pub/Sub events)
+│   ├── pubsub_manager.py       # Manages publishing information to Pub/Sub
+│   ├── utils.py                # Utility functions
+│   ├── watch.py                # Configures push notifications on the Gmail API
 ├── config/
-│   ├── settings.py             # Configuration globale du projet (chemins des fichiers, constantes)
-├── token.json                  # Jetons OAuth2 pour l'accès à l'API Gmail d'un utilisateur
-├── credentials.json            # Fichier de configuration OAuth2 (client secrets) pour l'utilisateur
-├── service-account.json        # Informations d'authentification pour le compte de service Google Cloud
-├── requirements.txt            # Dépendances du projet
-├── README.md                   # Ce fichier
-├── setup.py                    # Script pour installer les dépendances via setuptools
-├── tests/                      # Tests unitaires
-│   ├── test_gmail_manager.py    # Tests pour le gestionnaire Gmail
-│   ├── test_pubsub_manager.py   # Tests pour la gestion de Pub/Sub
+│   ├── settings.py             # Global project configuration (file paths, constants)
+├── secrets/                    # Directory for secret files (service-account.json, token.json, credentials.json)
+├── tests/                      # Unit tests for the project
+│   ├── test_auth.py            # Tests for auth.py
+│   ├── test_email_parser.py    # Tests for email_parser.py
+│   ├── test_gmail_manager.py   # Tests for gmail_manager.py
+│   ├── test_main.py            # Tests for main.py
+│   ├── test_pubsub_manager.py  # Tests for pubsub_manager.py
+│   ├── test_utils.py           # Tests for utils.py
+│   ├── test_watch.py           # Tests for watch.py
+├── Dockerfile                  # Configuration file for building the Docker image
+├── deployment.yaml             # Configuration file for Kubernetes deployment
+├── requirements.txt            # List of Python dependencies for the project
+├── README.md                   # Project documentation
+```
 
+## Table of Contents
 
-## Prérequis
-- **Python 3.8 ou supérieur**
-- **Un compte Google Cloud** avec accès à l'API Gmail et Pub/Sub
-- **Un projet Google Cloud** configuré avec Pub/Sub et un compte de service avec les permissions nécessaires
+- [Setup](#setup)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Command-Line Arguments](#command-line-arguments)
+- [Usage](#usage)
+  - [Running Locally](#running-locally)
+  - [Running with Docker](#running-with-docker)
+  - [Kubernetes Deployment](#kubernetes-deployment)
+- [Development](#development)
+- [License](#license)
 
-## Fichiers JSON
+## Setup
 
-### 1. `service-account.json`
-- **Description** : Ce fichier contient les informations d'authentification d'un compte de service Google Cloud. Il permet à l'application d'agir comme un service pour accéder à Pub/Sub.
-- **Usage** : Il est utilisé pour interagir avec Google Pub/Sub pour publier et écouter des messages. Il est référencé via `CREDENTIALS_PATH`.
+### Prerequisites
 
-### 2. `credentials.json`
-- **Description** : Ce fichier est utilisé pour l'authentification OAuth2 d'un utilisateur spécifique. Il contient les informations du client (client ID, client secret) pour démarrer le flux OAuth2.
-- **Usage** : Il est utilisé lors de la première connexion pour authentifier l'utilisateur via le flux OAuth et obtenir les jetons nécessaires pour accéder à ses emails via l'API Gmail.
+- Python 3.12
+- Google Cloud SDK
+- Docker
+- Kubernetes
 
-### 3. `token.json`
-- **Description** : Ce fichier contient les jetons d'authentification OAuth2 (jetons d'accès et de rafraîchissement) pour accéder aux emails de l'utilisateur. Il est généré après l'authentification initiale.
-- **Usage** : Il est utilisé pour les appels ultérieurs à l'API Gmail sans nécessiter de nouvelle authentification. Il est référencé via `TOKEN_PATH` dans le fichier de configuration.
+### Installation
 
-## Configuration
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/yourusername/Gmail2PubSub.git
+    cd Gmail2PubSub
+    ```
 
-### 1. Activer les APIs nécessaires :
-- Activez l'API Gmail et l'API Pub/Sub sur Google Cloud pour votre projet.
+2. Create and activate a virtual environment:
+    ```sh
+    python -m venv venv
+    source venv/bin/activate
+    ```
 
-### 2. Configurer un compte de service :
-- Créez un compte de service sur Google Cloud et téléchargez le fichier `service-account.json` dans la racine de votre projet.
+3. Install the required dependencies:
+    ```sh
+    pip install -r requirements.txt
+    ```
 
-### 3. Configurer l'authentification OAuth2 :
-- Obtenez les informations OAuth2 (client ID et client secret) via la [Console des API Google](https://console.cloud.google.com/apis/credentials) et enregistrez-les dans `credentials.json`.
+### Configuration
 
-### 4. Installer les dépendances :
-Installez les dépendances avec pip :
+1. Create a `secrets` directory and place your `service-account.json`, `token.json`, and `credentials.json` files inside it.
 
-```bash
-pip install -r requirements.txt
+2. Update the environment variables in the `Dockerfile` and `deployment.yaml` as needed.
 
-## Utilisation
+3. Create Kubernetes secrets:
+    ```sh
+    kubectl create namespace dev
 
-### 1. Configurer le watch sur Gmail
-Le watch sur Gmail configure les notifications push pour surveiller les nouveaux emails et déclencher un message sur Pub/Sub lorsque de nouveaux emails arrivent.
+    kubectl create secret generic gmail-service-account \
+      --from-file=service-account.json=secrets/service-account.json \
+      --namespace=dev
 
-```bash
+    kubectl create secret generic gmail-token \
+      --from-file=token.json=secrets/token.json \
+      --namespace=dev
+
+    kubectl create secret generic gmail-credentials \
+      --from-file=credentials.json=secrets/credentials.json \
+      --namespace=dev
+    ```
+
+## Command-Line Arguments
+
+The application supports the following command-line arguments:
+
+- `--watch`: Configures Gmail to watch for new emails.
+- `--listen`: Listens to Pub/Sub and processes incoming messages.
+- `--reset-cache`: Resets the cache of the `history_id`.
+
+Example usage:
+```sh
 python -m gmail2pubsub.main --watch
-
-## 2. Écouter les notifications Pub/Sub et publier les informations client
-Cette commande écoute les messages sur le topic Pub/Sub et publie les informations extraites (nom, téléphone, rendez-vous, etc.) sur un autre topic.
-
-```bash
 python -m gmail2pubsub.main --listen
+python -m gmail2pubsub.main --reset-cache
+```
 
+### Running Locally
 
-## Variables et Configuration dans `settings.py`
+1. Activate the virtual environment:
+    ```sh
+    source venv/bin/activate
+    ```
 
-- **PROJECT_ID** : L'identifiant du projet Google Cloud.
-- **SUBSCRIPTION_ID** : L'ID de la souscription Pub/Sub.
-- **GMAIL_TOPIC** : Le topic Pub/Sub où Gmail envoie les notifications.
-- **NEW_RDV_TOPIC** : Le topic Pub/Sub où les informations des rendez-vous sont publiées.
-- **SCOPES** : Les scopes OAuth2 pour l'API Gmail.
-- **CREDENTIALS_PATH** : Le chemin vers le fichier `service-account.json`.
-- **TOKEN_PATH** : Le chemin vers le fichier `token.json`.
+2. Run the application:
+    ```sh
+    python -m gmail2pubsub.main --watch
+    ```
 
-## Tests
-Les tests unitaires peuvent être lancés avec `pytest` :
+### Running with Docker
 
-```bash
-pytest tests/
+1. Build the Docker image:
+    ```sh
+    docker build -t gmail2pubsub-app .
+    ```
 
+2. Run the Docker container in the background:
+    ```sh
+    docker run -d \
+      -e PROJECT_ID="smshttp-436212" \
+      -e SUBSCRIPTION_ID="gmail-getmessages" \
+      -e GMAIL_TOPIC="GmailTopic" \
+      -e NEW_RDV_TOPIC="NewRdvTopic" \
+      -e LABEL_NAME="RESALIB" \
+      -v $(pwd)/secrets/service-account.json:/run/secrets/service-account.json \
+      -v $(pwd)/secrets/token.json:/run/secrets/token.json \
+      -v $(pwd)/secrets/credentials.json:/run/secrets/credentials.json \
+      --name gmail2pubsub-container gmail2pubsub-app python -m gmail2pubsub.main --listen
+    ```
 
-Secrets Kubernetes
- kubectl create namespace dev
+3. Run the Docker container interactively:
+    ```sh
+    docker run -it \
+      -e PROJECT_ID="smshttp-436212" \
+      -e SUBSCRIPTION_ID="gmail-getmessages" \
+      -e GMAIL_TOPIC="GmailTopic" \
+      -e NEW_RDV_TOPIC="NewRdvTopic" \
+      -e LABEL_NAME="RESALIB" \
+      -v $(pwd)/secrets/service-account.json:/run/secrets/service-account.json \
+      -v $(pwd)/secrets/token.json:/run/secrets/token.json \
+      -v $(pwd)/secrets/credentials.json:/run/secrets/credentials.json \
+      --name gmail2pubsub-container gmail2pubsub-app python -m gmail2pubsub.main --listen
+    ```
 
- kubectl create secret generic gmail-service-account \
-  --from-file=service-account.json=service-account.json \
-  --namespace=dev
-secret/gmail-service-account created
+4. To remove the Docker container:
+    ```sh
+    docker rm -f gmail2pubsub-container
+    ```
 
-kubectl create secret generic gmail-token \
-  --from-file=token.json=token.json \
-  --namespace=dev
-secret/gmail-token created
+### Kubernetes Deployment
 
-kubectl create secret generic gmail-credentials \
-  --from-file=credentials.json=credentials.json \
-  --namespace=dev
-secret/gmail-credentials created
+1. Apply the ConfigMap and Deployment:
+    ```sh
+    kubectl apply -f configmap.yaml
+    kubectl apply -f deployment.yaml
+    ```
 
-venv :
-source ~/projetsperso/smsgwy/venv/bin/activate
+## Development
 
-python -m gmail2pubsub.main --listen
+### Running Tests
 
+1. Install `sqlite3`:
+    ```sh
+    sudo apt-get install sqlite3
+    ```
 
-docker build -t gmail2pubsub-app .\n
-
-Lancer le conteneur Docker en arrière-plan :
-docker run -d \
-  -e PROJECT_ID="smshttp-436212" \
-  -e SUBSCRIPTION_ID="gmail-getmessages" \
-  -e GMAIL_TOPIC="GmailTopic" \
-  -e NEW_RDV_TOPIC="NewRdvTopic" \
-  -e LABEL_NAME="RESALIB" \
-  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/service-account.json:/run/secrets/service-account.json \
-  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/token.json:/run/secrets/token.json \
-  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/credentials.json:/run/secrets/credentials.json \
-  --name gmail2pubsub-container gmail2pubsub-app python -m gmail2pubsub.main --listen
-
-Lancer le conteneur Docker en mode interactif :
-  docker run -it \
-  -e PROJECT_ID="smshttp-436212" \
-  -e SUBSCRIPTION_ID="gmail-getmessages" \
-  -e GMAIL_TOPIC="GmailTopic" \
-  -e NEW_RDV_TOPIC="NewRdvTopic" \
-  -e LABEL_NAME="RESALIB" \
-  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/service-account.json:/run/secrets/service-account.json \
-  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/secrets/token.json:/run/secrets/token.json \
-  -v /home/xclem/projetsperso/smsgwy/gcp/Gmail2PubSub/credentials.json:/run/secrets/credentials.json \
-  --name gmail2pubsub-container gmail2pubsub-app python -m gmail2pubsub.main --listen
-
-#Pour supprimer
-docker rm -f gmail2pubsub-container
+2. Run the tests:
+    ```sh
+    pytest tests/
+    ```
 
 ## License
-Ce projet est sous licence MIT.
+
+This project is licensed under the MIT License.
